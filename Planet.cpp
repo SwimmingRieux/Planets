@@ -1,4 +1,4 @@
-
+#define double long double
 #include "Planet.h"
 
 void Planet::setTime(double t) {
