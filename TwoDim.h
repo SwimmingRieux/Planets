@@ -1,3 +1,4 @@
+#define double long double
 #ifndef TWODIM_H
 #define TWODIM_H
 
