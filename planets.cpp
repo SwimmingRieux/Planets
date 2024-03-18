@@ -23,7 +23,7 @@ const ll lg = 22;
 vector<vector<TwoDim>> Distances, Forces;
 vector<Planet> planets;
 vector<TwoDim> markedCells;
-int planets_count;
+int planets_count, forces_coefficient,  velocity_coefficient;
 bool flg[maxn][maxn], game1 = 1, game2 = 1;
 double planets_density;
 int maxL, maxC, maxR, minR;
@@ -35,11 +35,13 @@ int genRand(int a, int b) {
     return ((distrib(gen))%(b-a+1))+a;
 }
 
-void init(int n, double p, int mnr, int mxr)
+void init(int n, double p, int fc, int vc, int mnr, int mxr)
 {
     vector<TwoDim> tmp;
     per(i,0,maxn-1) tmp.pb(TwoDim(0, 0));
     per(i,0,maxn-1) { Forces.pb(tmp); Distances.pb(tmp); }
+    forces_coefficient = fc;
+    velocity_coefficient = vc;
     planets.pb(Planet(0, 0, 0, 0, 0, 0, 0, 0));
     getmaxyx(stdscr, maxL, maxC);
     maxL--; maxC--;
@@ -130,10 +132,16 @@ void setVariables()
             double rj = planets[j].getRadius();
             double mi = pow(ri, 2)*planets_density;
             double mj = pow(rj, 2)*planets_density;
+            mi /= forces_coefficient;
+            mj /= forces_coefficient;
             int dxij = abs(xi - xj);
             int dyij = abs(yi - yj);
             Distances[i][j] = Distances[j][i] = TwoDim(dxij, dyij);
-            Forces[i][j] = Forces[j][i] = TwoDim(mi*mj/pow(dxij, 2), min((double)10000, mi*mj/pow(dyij, 2)));
+            Forces[i][j] = Forces[j][i] = TwoDim(mi*mj/pow(dxij, 2), mi*mj/pow(dyij, 2));
+            deb(mi);
+            deb(mj);
+            deb(Forces[i][j].x);
+            deb(Forces[i][j].y);
         }
     }
     per(i,1,planets_count)
@@ -149,17 +157,10 @@ void setVariables()
         TwoDim Fi = planets[i].getForce();
         TwoDim vi = planets[i].getVelocity();
         TwoDim xi = planets[i].getCoordinate();
-        double minVelX = genRand(1, 2);
-        double minVelY = genRand(1, 2);
-        if(minVelX == 2) minVelX = 1;
-        else minVelX = -1;
-        if(minVelY == 2) minVelY = 1;
-        else minVelY = -1;
         //deb(minVelX);
         //deb(minVelY);
-        minVelX *= 0.001;
-        minVelY *= 0.001;
-        planets[i].setVelocity(TwoDim((vi.x + min(minVelX, (Fi.x/mi)/10000)), (vi.y + min(minVelY, Fi.y/mi)/10000)));
+        planets[i].setVelocity(TwoDim(vi.x + (Fi.x/mi)/velocity_coefficient, vi.y + (Fi.y/mi)/velocity_coefficient));
+        //planets[i].setVelocity(TwoDim((vi.x + min(minVelX, (Fi.x/mi)/10000)), (vi.y + min(minVelY, Fi.y/mi)/10000)));
         vi = planets[i].getVelocity();
         //deb(planets[i].getVelocity().x);
         //deb(planets[i].getVelocity().y);
@@ -213,7 +214,7 @@ signed main()
 {    
     game1 = game2 = 1;
     initscr();
-    init(3, 5, 5, 20);
+    init(3, 5, 5, 50, 5, 20);
     timeout(24);
     //nodelay(stdscr, TRUE);
     thread t1(performThread);
