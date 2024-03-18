@@ -128,12 +128,12 @@ void setVariables()
             int yj = planets[j].getCoordinate().y;
             double ri = planets[i].getRadius();
             double rj = planets[j].getRadius();
-            double mi = (3.14)*pow(ri, 2)*planets_density;
-            double mj = (3.14)*pow(rj, 2)*planets_density;
+            double mi = pow(ri, 2)*planets_density;
+            double mj = pow(rj, 2)*planets_density;
             int dxij = abs(xi - xj);
             int dyij = abs(yi - yj);
             Distances[i][j] = Distances[j][i] = TwoDim(dxij, dyij);
-            Forces[i][j] = Forces[j][i] = TwoDim(mi*mj/pow(dxij, 2), mi*mj/pow(dyij, 2));
+            Forces[i][j] = Forces[j][i] = TwoDim(mi*mj/pow(dxij, 2), min((double)10000, mi*mj/pow(dyij, 2)));
         }
     }
     per(i,1,planets_count)
@@ -213,7 +213,7 @@ signed main()
 {    
     game1 = game2 = 1;
     initscr();
-    init(10, 5, 5, 20);
+    init(3, 5, 5, 20);
     timeout(24);
     //nodelay(stdscr, TRUE);
     thread t1(performThread);
