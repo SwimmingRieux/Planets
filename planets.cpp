@@ -24,15 +24,15 @@ vector<vector<TwoDim>> Distances, Forces;
 vector<Planet> planets;
 vector<TwoDim> markedCells;
 int planets_count;
-bool flg[maxn][maxn];
+bool flg[maxn][maxn], game1 = 1, game2 = 1;
 double planets_density;
 int maxL, maxC, maxR, minR;
-
+mutex mtx;
 int genRand(int a, int b) {
     random_device rd;
     static mt19937 gen(rd());
     static uniform_int_distribution<> distrib(a, b);
-    return distrib(gen);
+    return ((distrib(gen))%(b-a+1))+a;
 }
 
 void init(int n, double p, int mnr, int mxr)
@@ -149,30 +149,35 @@ void setVariables()
         TwoDim Fi = planets[i].getForce();
         TwoDim vi = planets[i].getVelocity();
         TwoDim xi = planets[i].getCoordinate();
-        planets[i].setVelocity(TwoDim(vi.x + (Fi.x/mi), vi.y + (Fi.y/mi)));
-        //vi = planets[i].getVelocity();
-        vi = TwoDim(1, 1);
-        deb(planets[i].getVelocity().x);
-        deb(planets[i].getVelocity().y);
+        double minVelX = genRand(1, 2);
+        double minVelY = genRand(1, 2);
+        if(minVelX == 2) minVelX = 1;
+        else minVelX = -1;
+        if(minVelY == 2) minVelY = 1;
+        else minVelY = -1;
+        //deb(minVelX);
+        //deb(minVelY);
+        minVelX *= 0.001;
+        minVelY *= 0.001;
+        planets[i].setVelocity(TwoDim((vi.x + min(minVelX, (Fi.x/mi)/10000)), (vi.y + min(minVelY, Fi.y/mi)/10000)));
+        vi = planets[i].getVelocity();
+        //deb(planets[i].getVelocity().x);
+        //deb(planets[i].getVelocity().y);
         planets[i].setCoordinate(TwoDim(xi.x + vi.x, xi.y + vi.y));
         // here
     }
 
 }
 
-signed main()
-{    
-    initscr();
-    init(10, 5, 5, 20);
-    bool game = 1;
-    //nodelay(stdscr, TRUE);
-    timeout(500);
-    while(game)
+void readThread()
+{
+    noecho();
+    while(game2)
     {
-        setVariables();
-        draw();
+
+        auto start = std::chrono::high_resolution_clock::now();
+        mtx.lock();
         char c = getch();
-        auto end = std::chrono::high_resolution_clock::now();
         if(c == 's') 
         {
             planets[1].setRadius(max(planets[1].getRadius()-1,(double)minR));
@@ -181,9 +186,40 @@ signed main()
         {
             planets[1].setRadius(min(planets[1].getRadius()+1,(double)maxR));
         }
-        else if(c == 'q') game = 0;
-        
+        else if(c == 'q') game1 = game2 = 0;
+        mtx.unlock();
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+        //deb(duration.count());
+        this_thread::sleep_for(std::chrono::milliseconds(25 - duration.count()));
     }
+}
+
+void performThread()
+{
+    //deb("perform");
+    while(game1)
+    {
+        mtx.lock();
+        setVariables();
+        draw();
+        mtx.unlock();
+        this_thread::sleep_for(std::chrono::milliseconds(25));
+    }
+}
+
+
+signed main()
+{    
+    game1 = game2 = 1;
+    initscr();
+    init(10, 5, 5, 20);
+    timeout(24);
+    //nodelay(stdscr, TRUE);
+    thread t1(performThread);
+    thread t2(readThread);
+    t1.join();
+    t2.join();
     endwin();
     
     return 0;
