@@ -1,4 +1,5 @@
-
+#define ll long long
+#define double long double
 #ifndef PLANET_H
 #define PLANET_H
 
@@ -12,7 +13,7 @@ class Planet {
         double time;
         double radius;
     public:
-        Planet(double vx, double vy, int cx, int cy, double fx, double fy, int t, double r) :
+        Planet(double vx, double vy, ll cx, ll cy, double fx, double fy, ll t, double r) :
             velocity(vx, vy), coordinate(cx, cy), force(fx, fy), time(t), radius(r) {}
 
     void setTime(double t);
